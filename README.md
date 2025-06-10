@@ -12,7 +12,11 @@ cd JARVIS-Assistant
 ```
 2. If you launch it, it probably wont have functionality but should look like this. Yes most of this is just for looks, the only thing that updates is the date, time, temp, and temperature widget when you click the circle in the bottom right.
 <img width="1694" alt="Screenshot 2025-06-10 at 3 13 11 PM" src="https://github.com/user-attachments/assets/e5f8488f-b089-41d0-b1f2-d91e019e0bb9" />
-3. This is all changable in the html file.
+
+3. And it has this animation when you talk to it
+<img width="1695" alt="Screenshot 2025-06-10 at 3 33 52 PM" src="https://github.com/user-attachments/assets/08927344-625c-4b9b-82f3-b364cb308f42" />
+
+4. This is all changable in the html file.
 
 ## Backend Setup
 1. This backend (n8n) costs $20/month but has a free trial and is a great and easy option to update and integrate new features.
