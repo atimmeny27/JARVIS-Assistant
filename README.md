@@ -16,7 +16,7 @@ cd JARVIS-Assistant
 
 ## Backend Setup
 1. This backend (n8n) costs $20/month but has a free trial and is a great and easy option to update and integrate new features.
-2. [This](https://www.youtube.com/watch?v=KUvSzvFeZls)YouTube video explains it well how to setup this backend and provides free templates if you want to use them.
+2. [This] (https://www.youtube.com/watch?v=KUvSzvFeZls)YouTube video explains it well how to setup this backend and provides free templates if you want to use them.
 3. Ensure you setup the proper API keys for each service you use. 99% of the time there is a free option to use.
 
 ## 11 Labs Voice Agent
