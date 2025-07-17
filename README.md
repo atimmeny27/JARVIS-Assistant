@@ -2,6 +2,10 @@
 
 This is a spin off of JARVIS from Iron Man, also highly customizable to be an expert in stem, history, or any subject(s) you can think of. It uses an HTML/CSS/JS stack for frontend and an API key with an n8n webhook as a backend or for the logic. If you wish to add/subtract features this n8n is no-code and all you need is an API for the intended service. You can send emails, texts, set reminders, turn on and off lights in your house, have a conversation, generate images, and anything else you want to build out.
 
+## TO USE, SEARCH "*ADD" and replace all values that require api keys or other values
+
+## THIS IS SCALED FOR A FULLSIZE MAC DESKTOP APP, JUST CHANGE THE CSS PX VALUES IF YOU PLAN TO USE THIS ON THE WEB
+
 It runs locally on port 2006, you can change if you want. When the user presses the middle button, it activates an 11labs Voice Agent running with an [ollama model](https://github.com/ollama/ollama). This then uses the agent to decide which n8n process to run, completes the task, and responds using the same ollama model in whatever 11labs voice and prompt you use.
 
 When the user presses "W", they have the option to bring up a camera and mic. Pressing the space bar after giving permissions will allow the user to speak a prompt, show an item or anything in the webcam, and interact with whatever llm they use as if it had eyes and was conversing with them. I am working on adding CAD specific features to this to make for better and more practical STEM use cases. By changing the index.html a bit, you can wire up a different camera to use if you want. I cannot provide this because it will be different based on various factors. 
