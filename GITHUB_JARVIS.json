@@ -1,0 +1,1294 @@
+{
+  "name": "GITHUB JARVIS",
+  "nodes": [
+    {
+      "parameters": {
+        "name": "emailAgent",
+        "description": "Call this tool for any email actions.",
+        "workflowId": {
+          "__rl": true,
+          "value": "APROWlf1BGCrLptP",
+          "mode": "list",
+          "cachedResultName": "Email"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1260
+      ],
+      "id": "d55ed188-fe3a-4312-af7b-dfe51e43b4aa",
+      "name": "Email Agent"
+    },
+    {
+      "parameters": {
+        "name": "contactAgent",
+        "description": "Call this tool for any contact related actions, this is where names are linked to emails and phone numbers.",
+        "workflowId": {
+          "__rl": true,
+          "value": "ag089APTB5oVaHxW",
+          "mode": "list",
+          "cachedResultName": "Contacts"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        1260
+      ],
+      "id": "6aac9c60-1d01-45ca-b768-e4894310bd46",
+      "name": "Contact Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"your api here\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to search the internet for",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        660
+      ],
+      "id": "e060afb9-400b-4a7d-8111-0d85a25f6970",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        -140,
+        640
+      ],
+      "id": "bbce5710-537f-473f-a65e-61aeeb3b5e38",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "name": "calendarAgent",
+        "description": "Call this tool for any calendar action.",
+        "workflowId": {
+          "__rl": true,
+          "value": "Abk4b31KU4xoT6so",
+          "mode": "list",
+          "cachedResultName": "Calendar"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        1260
+      ],
+      "id": "3b6f3662-bb2a-4398-9d11-10b0dec0d8d3",
+      "name": "Calendar Agent"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -520,
+        460
+      ],
+      "id": "bb0424ae-95c8-42a8-b1a0-e920f471f86d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.headers.host }}",
+        "contextWindowLength": 50
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -840,
+        720
+      ],
+      "id": "2e8aa785-8fde-4495-a27f-ce1d467e284c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "content": "# JARVIS Main Agent\n",
+        "height": 200,
+        "width": 380,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -980,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "182e7684-9431-4f73-958e-d1e33b9b0d96",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Child Agents\nThese are all provided \nin my Git Repo as copy/paste",
+        "height": 240,
+        "width": 1480,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -800,
+        1220
+      ],
+      "typeVersion": 1,
+      "id": "a8a5a11a-2d18-438a-9d14-73e4a5596eb5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for any query related to stocks, shares, buying, portfolio, questions like \"what did I buy __ at?\", \"How's Apple stock doing year to date?\", cost-per-share, or companies. ANY QUERY WITH STOCK IN IT MUST PASS THROUGH THIS TOOL.",
+        "workflowId": {
+          "__rl": true,
+          "value": "9z3RuBLDMfSv0Zqh",
+          "mode": "list",
+          "cachedResultName": "Stocks"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        40,
+        1260
+      ],
+      "id": "8b64fe86-b5c6-4adc-a9b3-2979fe3b2d37",
+      "name": "Stocks"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for inputs related to coding, programming, code, file, script, scripting, html, css, python, java, or cursor. ",
+        "workflowId": {
+          "__rl": true,
+          "value": "UcRKzoIBQCJK6uHB",
+          "mode": "list",
+          "cachedResultName": "Programming Bot"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        280,
+        1260
+      ],
+      "id": "10fa8cc7-ed13-4745-add4-9ee814edb0d0",
+      "name": "Code Gen"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = String(\n  $json.body?.query ||\n  $json.body?.chatInput ||\n  $json.body?.message ||\n  $json.query ||\n  \"hello\"\n);\n\nconst command = input.toLowerCase().trim();\n\nconst sceneMap = {\n  //you can map out hue light scenes if you have them, this reduces wait time compared to passing through an ai agent\n  \"lights on\": \"lights on\",\n  \"light on\": \"lights on\",\n  \"lights off\": \"lights off\",\n  \"light off\": \"lights off\",\n  \nfor (const phrase in sceneMap) {\n  if (command.includes(phrase)) {\n    return [{\n      json: {\n        matchedSceneKey: phrase,\n        matchedSceneValue: sceneMap[phrase],\n        body: {\n          query: JSON.stringify({ message: sceneMap[phrase] })\n        }\n      }\n    }];\n  }\n}\n\n// Fallback\nreturn [{\n  json: {\n    matchedSceneKey: null,\n    matchedSceneValue: null,\n    body: {\n      query: input\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2020,
+        1620
+      ],
+      "id": "f1a5a3a5-8d0b-449b-8658-05fccb953c5e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dfb2130c-3051-439c-96bd-dfb4abc98848",
+                    "leftValue": "={{$json[\"matchedSceneValue\"]}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json[\"matchedSceneValue\"]}}",
+                    "rightValue": "lights on",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a7c48a86-28ae-4d66-ad8f-9bce4b9264f7"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7a0bfce6-5c37-47c1-8f5f-c90286733364",
+                    "leftValue": "={{$json[\"matchedSceneValue\"]}}",
+                    "rightValue": "lights off",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1580,
+        1500
+      ],
+      "id": "8353235d-8f2f-404c-a114-e0e6a2403a44",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "lightId": "2",
+        "additionalFields": {
+          "bri": 250,
+          "hue": 0,
+          "sat": 0
+        }
+      },
+      "type": "n8n-nodes-base.philipsHue",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        1580
+      ],
+      "id": "a2e09c20-c2f2-4590-b8e8-f06d3d7828a3",
+      "name": "Regular Lights",
+      "credentials": {
+        "philipsHueOAuth2Api": {
+          "id": "Yz7AytAmGCLviNSu",
+          "name": "PhilipHue account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "lightId": "4",
+        "additionalFields": {
+          "bri": 250,
+          "hue": 0,
+          "sat": 0
+        }
+      },
+      "type": "n8n-nodes-base.philipsHue",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        1580
+      ],
+      "id": "a0e467bb-e530-4e4d-b42b-e1e1a5c7be63",
+      "name": "Regular Lights1",
+      "credentials": {
+        "philipsHueOAuth2Api": {
+          "id": "Yz7AytAmGCLviNSu",
+          "name": "PhilipHue account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "lightId": "3",
+        "additionalFields": {
+          "bri": 250,
+          "hue": 6500,
+          "sat": 120
+        }
+      },
+      "type": "n8n-nodes-base.philipsHue",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        1580
+      ],
+      "id": "83d329d9-7b6a-47c3-9025-e68c70645030",
+      "name": "Regular Lights2",
+      "credentials": {
+        "philipsHueOAuth2Api": {
+          "id": "Yz7AytAmGCLviNSu",
+          "name": "PhilipHue account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "lightId": "2",
+        "on": false,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.philipsHue",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        1700
+      ],
+      "id": "1ce33fa9-54d7-4d35-a5ed-7973352aaa76",
+      "name": "Lights Off",
+      "credentials": {
+        "philipsHueOAuth2Api": {
+          "id": "Yz7AytAmGCLviNSu",
+          "name": "PhilipHue account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "lightId": "4",
+        "on": false,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.philipsHue",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        1700
+      ],
+      "id": "13afbf1e-166b-45e9-a7db-82daf6431642",
+      "name": "Lights Off1",
+      "credentials": {
+        "philipsHueOAuth2Api": {
+          "id": "Yz7AytAmGCLviNSu",
+          "name": "PhilipHue account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "lightId": "3",
+        "on": false,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.philipsHue",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        1700
+      ],
+      "id": "7987715d-7be0-4caa-8f63-f9d6f5bc5e6a",
+      "name": "Lights Off2",
+      "credentials": {
+        "philipsHueOAuth2Api": {
+          "id": "Yz7AytAmGCLviNSu",
+          "name": "PhilipHue account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for queries related to \"CAD\", \"hardware\", \"3d\", \"3d print\", or \"Make a model of a\"",
+        "workflowId": {
+          "__rl": true,
+          "value": "hCvkwyQW3WQ10xr6",
+          "mode": "list",
+          "cachedResultName": "CAD Designer"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        1260
+      ],
+      "id": "c72fba8c-0c96-4d47-b1c8-a62a127a3e6a",
+      "name": "CAD Designer"
+    },
+    {
+      "parameters": {
+        "description": "Call this tool for prompts related to summaries, summary, overview, notes, or a note.",
+        "workflowId": {
+          "__rl": true,
+          "value": "ukWbYLgzD6sTunI6",
+          "mode": "list",
+          "cachedResultName": "Notes"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        520,
+        1260
+      ],
+      "id": "6bb3663b-01e2-4167-97e3-911d06c2248f",
+      "name": "Notes"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.query || $json.body.imageBase64 }}",
+        "options": {
+          "systemMessage": "=You are receiving a base64-encoded image and a Binary image. \nMIME type: {{ $json.body.mimeType }}\nBase64 image data: {{ $json.body.imageBase64 }}\nPlease use the {{ $json.body.query }} as the question. It will often be identifying or asking a clarifying question about an object.\n\nI am more interested in the main focus of the shot and not so much background stuff. It is more important for details about the focal point, not so much walls, rooms, fans, doors, etc... You have access to a search engine through the Tavily tool, feel free to use if needed. ",
+          "passthroughBinaryImages": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -2560,
+        1920
+      ],
+      "id": "87f9b5e6-0931-4797-aac6-e1bfa7d55844",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -2180,
+        1920
+      ],
+      "id": "9cb961fe-63dd-4452-8172-a24639b94b04",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const hasBinaryImage = $binary?.image !== undefined;\nconst hasBase64Image = typeof $json.body?.imageBase64 === 'string' && $json.body.imageBase64.includes('base64');\n\nlet base64Clean = null;\nlet mimeType = null;\n\nif (hasBase64Image) {\n  const matches = $json.body.imageBase64.match(/^data:(.*?);base64,/);\n  mimeType = matches ? matches[1] : 'image/jpeg';\n  base64Clean = $json.body.imageBase64.replace(/^data:.*;base64,/, '');\n}\n\n// Parse input message safely\nlet query = \"hello\";\n\nif (typeof $json.body?.query === 'string') {\n  query = $json.body.query;\n} else if (typeof $json.body?.chatInput === 'string') {\n  query = $json.body.chatInput;\n} else if (typeof $json.body?.message === 'string') {\n  try {\n    const parsed = JSON.parse($json.body.message);\n    if (typeof parsed.message === 'string') {\n      query = parsed.message;\n    }\n  } catch (e) {\n    // not JSON? just fallback to raw message string\n    query = $json.body.message;\n  }\n} else if (typeof $json.query === 'string') {\n  query = $json.query;\n}\n\nreturn [{\n  json: {\n    isImageRequest: hasBinaryImage || hasBase64Image,\n    body: {\n      query: query,\n      imageBase64: base64Clean,\n      mimeType: mimeType,\n      fileName: hasBinaryImage ? $binary.image.fileName : 'image.jpg'\n    }\n  },\n  binary: hasBinaryImage ? $binary : undefined\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2400,
+        1460
+      ],
+      "id": "9c886938-1426-4ec1-b4f4-837bbad16317",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.isImageRequest }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "f219c597-aefe-4e8c-afba-98ce61ae0161"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b8ebb473-d680-48b0-9e95-561d806d2130",
+                    "leftValue": "={{ $json.isImageRequest }}",
+                    "rightValue": "false",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -2420,
+        1720
+      ],
+      "id": "7f1d7b47-dd77-404f-9782-9f45c8307ace",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"Your Api here\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to search the internet for",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -2380,
+        2120
+      ],
+      "id": "e716acd1-cd7d-40e6-af9e-938f28f9021c",
+      "name": "Tavily1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    fixedPrompt: \"The lights have been configured.\",\n    Color: \"On\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        1580
+      ],
+      "id": "a2e80066-b766-4e77-86a5-668746d69864",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    fixedPrompt: \"The lights have been configured.\",\n    Color: \"off\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -920,
+        1700
+      ],
+      "id": "4dc1fdc1-6657-4c0f-86b3-cbc5abc0c1c9",
+      "name": "Code7"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.fixedPrompt }}",
+        "options": {
+          "systemMessage": "=If you are activated just say this exactly and this only:\n\"I've turned the lights {{ $json.Color }}\"\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -500,
+        1560
+      ],
+      "id": "a49c540e-409e-4f01-802a-c25ca4d56b7a",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -120,
+        1560
+      ],
+      "id": "10b8c19c-5851-438b-a20e-3f4c68580b66",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Fetch current weather for my location.",
+        "url": "https://api.open-meteo.com/v1your api here",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "forecast_days",
+              "valueProvider": "fieldValue",
+              "value": "1"
+            },
+            {
+              "name": "hourly",
+              "valueProvider": "fieldValue",
+              "value": "temperature_2m"
+            }
+          ]
+        }
+      },
+      "id": "1dee2480-dba2-4da0-8eba-3cebba7553d3",
+      "name": "Weather HTTP Request",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        -480,
+        660
+      ],
+      "notesInFlow": true,
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "content": "## Connect your webhook here to \"code 1\""
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2680,
+        1420
+      ],
+      "id": "b086f8ca-73e6-4ccc-8265-f63280344773",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "content": "## This deciphers between a image (for image recognition) or a generic request",
+        "height": 180,
+        "width": 300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2600,
+        1600
+      ],
+      "id": "b99fcd49-9ab8-455f-9b17-4897de605d70",
+      "name": "Sticky Note19"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -2560,
+        2120
+      ],
+      "id": "af3c82d8-aaca-48cf-a8d9-915743f4ace7",
+      "name": "Ollama Chat Model"
+    },
+    {
+      "parameters": {
+        "content": "## Use any llm"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2700,
+        2060
+      ],
+      "id": "c2d26db0-7880-4e88-b43b-6c10954c2435",
+      "name": "Sticky Note20"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.body?.chatInput || $json.body?.message || $json.body?.query || \"Hello\"}}",
+        "options": {
+          "systemMessage": "=\n        Your name is Jarvis, which stands for Just a Rather Intelligent System.\n        You are an AI designed to assist with engineering projects, and you are an expert in all engineering, math, and science disciplines.\n        Your creator's name is \"Your name here, and you address them as \"Whatever you want\" and you also speak with a british accent.\n        When answering, you respond using complete and concise sentences and to keep a quick pacing to keep the conversation flowing. You have a fun personality.\n\nCall the weather tool for any queries related to weather, temperature, rain, or forecast. You will then respond exactly like this, in farenheight: \"The weather today will be between (high temp, JUST A NUMBER, exclude farenheight) and (low temp, JUST A NUMBER, exclude farenheight), there is a (%) chance of rain, then add a comment about whatever you want to.\"\n\nData You Know\n-------------\n- My location: Something near where you want (this is only applicable for map and weather widgets if you want)\n\n- anything else you want to add"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -920,
+        460
+      ],
+      "id": "679d47f3-e87c-4314-879f-73f50e0a0dac",
+      "name": "AI AGENT"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        700
+      ],
+      "id": "ee2cc3ad-bf6b-4f8a-8161-888595d745ea",
+      "name": "Ollama Chat Model1"
+    },
+    {
+      "parameters": {
+        "content": "## Or any llm"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        640
+      ],
+      "id": "938afbc7-16d4-4209-bf5d-7e70a22a79b7",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        1840
+      ],
+      "id": "b2fd3376-3d3e-4e0a-abaf-dbee9c59eec2",
+      "name": "Ollama Chat Model2"
+    },
+    {
+      "parameters": {
+        "content": "## Use any llm\nThis is just for fixed responses you can delete this agent + webhook safely",
+        "height": 180,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        1760
+      ],
+      "id": "3c244531-cdfc-484e-8496-10af2e17f0c0",
+      "name": "Sticky Note21"
+    },
+    {
+      "parameters": {
+        "content": "## LINK PRODUCTION WEBHOOK TO THE HTML NOT TEST",
+        "height": 240,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2680,
+        1140
+      ],
+      "id": "396cf2b1-f7ab-4d23-99c5-9726db808543",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "name": "contentCreator",
+        "description": "Call this tool when the query is about or contains image, image generation, quick image, sketch.",
+        "workflowId": {
+          "__rl": true,
+          "value": "zi5sO0nqOZ9g3PLk",
+          "mode": "list",
+          "cachedResultName": "Image From Prompt"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        1260
+      ],
+      "id": "1d5b26de-a72b-47df-a028-89d1f88fef45",
+      "name": "Image Gen Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stocks": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Gen": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Regular Lights",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lights Off",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regular Lights": {
+      "main": [
+        [
+          {
+            "node": "Regular Lights1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regular Lights1": {
+      "main": [
+        [
+          {
+            "node": "Regular Lights2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Regular Lights2": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lights Off": {
+      "main": [
+        [
+          {
+            "node": "Lights Off1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lights Off1": {
+      "main": [
+        [
+          {
+            "node": "Lights Off2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lights Off2": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CAD Designer": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notes": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weather HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI AGENT": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Gen Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI AGENT",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "171b61dc-8b28-40de-8c27-8d80a9c1a31f",
+  "meta": {
+    "instanceId": "c649c9e0acff8ae826586d9788d2ba5cec645d0f921bc447e493790d7afe18da"
+  },
+  "id": "FWXAfigFF0wMt5kh",
+  "tags": []
+}
