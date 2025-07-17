@@ -4,6 +4,8 @@ This is a spin off of JARVIS from Iron Man, also highly customizable to be an ex
 
 It runs locally on port 2006, you can change if you want. When the user presses the middle button, it activates an 11labs Voice Agent running with an [ollama model](https://github.com/ollama/ollama). This then uses the agent to decide which n8n process to run, completes the task, and responds using the same ollama model in whatever 11labs voice and prompt you use.
 
+When the user presses "W", they have the option to bring up a camera and mic. Pressing the space bar after giving permissions will allow the user to speak a prompt, show an item or anything in the webcam, and interact with whatever llm they use as if it had eyes and was conversing with them. I am working on adding CAD specific features to this to make for better and more practical STEM use cases. By changing the index.html a bit, you can wire up a different camera to use if you want. I cannot provide this because it will be different based on various factors. 
+
 ## Frontend Setup
 1.
 ```bash
@@ -34,3 +36,5 @@ docker build -t JARVIS-Assistant .
 docker run -d --name jarvis-container -p 2006:80 --restart always JARVIS-Assistant
 ```
 2. Launch via localhost:2006 or whatever port you choose, thats it.
+
+3. Using a pi 4 or newer with any persistent docker alternatives via ssh is what I have changed to and currently use. 
