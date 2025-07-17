@@ -12,7 +12,7 @@ When the user presses "W", they have the option to bring up a camera and mic. Pr
 git clone https://github.com/atimmeny27/JARVIS-Assistant
 cd JARVIS-Assistant
 ```
-2. If you launch it, it probably wont have functionality but should look like this. Yes most of this is just for looks, the only thing that updates is the date, time, temp, and temperature widget when you click the circle in the bottom right.
+2. If you launch it, it probably wont have functionality but should look like this. Yes most of this is just for looks, the only thing that updates is the date, time, temp, and temperature widget when you click the circle in the bottom right. I have hardcoded [this repo](https://github.com/atimmeny27/IOS-Location-Change) into the map in the top right, so when I click a location it changes my location to there, but it can slow down processing speeds and there is rarely a use-case for it.
 <img width="1694" alt="Screenshot 2025-06-10 at 3 13 11 PM" src="https://github.com/user-attachments/assets/e5f8488f-b089-41d0-b1f2-d91e019e0bb9" />
 
 3. And it has this animation when you talk to it
