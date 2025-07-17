@@ -1,0 +1,1239 @@
+{
+  "name": "Stocks",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        100
+      ],
+      "id": "77eb944a-5f27-42fb-84b5-44fd240bfeb1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query}}",
+        "options": {
+          "systemMessage": "You are a portfolio assistant. The user will ask for updates on their stocks using natural language.\n\nYour task is to:\n1. Understand whether they are asking about:\n   - A **single stock**\n   - Their **entire portfolio**\n2. Determine the **time range**: \"today\", \"week\", \"year\", or \"purchase\" (meaning since they bought it)\n3. Return a clean, structured JSON object based on their intent\n\n---\n\n🧠 Company name → symbol mapping:\n\nIf the user mentions a company name (e.g. \"Advanced Micro Devices\" or \"Cheesecake Factory\"), convert it to its stock symbol:\n\n- \"Advanced Micro Devices\" → \"AMD\"\n- \"Tesla\" → \"TSLA\"\n- \"Coinbase\" → \"COIN\"\n- \"PayPal\" → \"PYPL\"\n- \"Nvidia\" → \"NVDA\"\n- \"e.l.f. Beauty\" → \"ELF\"\n- \"Cheesecake Factory\" → \"CAKE\"\n- \"SoFi\" → \"SOFI\"\n- \"XRP\" → \"XRP\"\n\n---\n\n🧾 Output Format:\n\nRespond with **strict valid JSON**, and nothing else. Use one of the following formats:\n\n// Single stock today example \n{\n  \"mode\": \"single\",\n  \"symbol\": \"AMD\",\n  \"shares\": 6.03,\n  \"purchase_price\": 93.21,\n  \"time_range\": \"today\"\n}\n// All stocks this week example\n{\n  \"mode\": \"\n}\n// One stock since purchase or \"total profits/loss\"\n{\n  \"mode\": \"purchase\",\n  \"symbol\": \"AMD\",\n  \"shares\": 6.03,\n  \"purchase_price\": 93.21,\n}\n\nIf the user asks about a stock not in the portfolio (e.g. \"How's Netflix\") or about any stock performance along the lines of \"year to date\" or \"this year\", convert the name to symbol (e.g. Netflix → NFLX) and return:\n\n{ \"mode\": \"external\", \"symbol\": \"NFLX\", \"time_range\": \"ytd\" }\n\nUse this for queries related to \"year to date\".\n\n---\n\nIf the user asks \"how many shares of (stock) do I own?\", respond like this:\n\n\"shares\": (number of shares from airtable, ex 28.4)\n\n\n---\n\nIf the user asks \"What did I buy (stock) at?\", or \"What's my cost-per-share of (stock)?\" respond like this:\n\n\"price\": (share price from airtable, ex 62.84 per share)\n\n---\n\n⚠️ Do NOT include explanations, formatting, commentary, or anything outside the JSON object."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "55db3eb1-0542-4668-8e43-098697378cd9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        140,
+        220
+      ],
+      "id": "79f17d64-ada6-4414-88ea-74f1b700c64c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "*ADD API HERE*",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d8ca50b7-8f3d-4c60-ad3a-8a013c948035",
+                    "leftValue": "={{$json.mode}}",
+                    "rightValue": "external",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.mode}}",
+                    "rightValue": "purchase",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5528e389-e21c-498c-933d-2fde436ce3fd"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2abb8954-a337-4285-82d1-f6fe76cd60d2",
+                    "leftValue": "={{$json.mode}}",
+                    "rightValue": "single",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "fc5614ab-d8f4-4bba-aea3-cc7e3e51a43e",
+                    "leftValue": "={{ $json.shares }}",
+                    "rightValue": "shares",
+                    "operator": {
+                      "type": "number",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "27e341ef-ba6e-4287-9fcd-a169dac30986",
+                    "leftValue": "={{ $json.price }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "number",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        780,
+        0
+      ],
+      "id": "8ef22c5f-54f0-4cb2-bb9c-8880d22da329",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: JSON.parse($json.output) }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "80f79475-d8b6-4f36-88f2-590472f209ff",
+      "name": "Parse Input"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  symbol,\n  shares,\n  purchase_price,\n  c: finn_current,  // From Finnhub quote\n  o: finn_open,     // From Finnhub quote\n  open_price,       // From 12data (optional)\n  current_price,    // If you decide to pull this from 12data later\n  use_fallback,\n  time_range\n} = $json;\n\n// Use fallback if flag is set or 12data value is null\nconst final_open = (use_fallback || open_price == null) ? finn_open : open_price;\nconst final_current = (use_fallback || current_price == null) ? finn_current : current_price;\n\n// Select correct base price\nlet base_price;\nif (time_range === \"today\") {\n  base_price = final_open;\n} else if (time_range === \"purchase\") {\n  base_price = purchase_price;\n} else {\n  throw new Error(`Unsupported time range: ${time_range}`);\n}\n\n// Calculate profit/loss\nconst cost = shares * base_price;\nconst value = shares * final_current;\nconst gain = value - cost;\nconst percent = (gain / cost) * 100;\n\nreturn [{\n  json: {\n    symbol,\n    shares,\n    time_range,\n    base_price: base_price.toFixed(2),\n    current_price: final_current.toFixed(2),\n    gain: gain.toFixed(2),\n    percent_change: percent.toFixed(2),\n    source: (use_fallback || open_price == null) ? \"Finnhub (fallback)\" : \"12data\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        1400
+      ],
+      "id": "77e63b85-5e05-471c-8383-0c44e525ba17",
+      "name": "Return Data"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1480,
+        1440
+      ],
+      "id": "4931e318-50d3-4459-a465-6075fba2047d",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { symbol, current_price, gain, percent_change } = $json;\n\nconst roundedPrice = Number(current_price).toFixed(2);\nconst roundedPercent = Number(percent_change).toFixed(2);\n\nconst direction = gain >= 0 ? \"up\" : \"down\";\nconst response = `${symbol} is currently trading at $${roundedPrice}. That's ${direction} ${Math.abs(roundedPercent)}% today.`;\n\nreturn [{ json: { voice_output: response } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2020,
+        1380
+      ],
+      "id": "3bae237c-effa-4a8c-9215-0c28e6dc84e9",
+      "name": "JARVIS Response"
+    },
+    {
+      "parameters": {
+        "url": "=https://finnhub.io/api/v1/quote?symbol={{ $json.symbol }}&token=*ADD API HERE*",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        1440
+      ],
+      "id": "142471a8-3abd-4767-aa06-d0d30eabcc5c",
+      "name": "Fetch Price real"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.twelvedata.com/time_series?symbol={{ $json.symbol }}&interval=1min&start_date={{ $json.start }}&end_date={{ $json.end }}&apikey=c80e4eff56134e6cbc8ea6ea070f8355",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        1580
+      ],
+      "id": "95c98444-c484-448c-9d76-73dc057b6477",
+      "name": "Fetch Price"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\n// Format YYYY-MM-DD\nconst yyyy = now.getFullYear();\nconst mm = String(now.getMonth() + 1).padStart(2, '0');\nconst dd = String(now.getDate()).padStart(2, '0');\nconst date = `${yyyy}-${mm}-${dd}`;\n\n// Create 9:30 and 9:31 timestamps\nconst start = `${date} 09:30:00`;\nconst end = `${date} 09:31:00`;\n\nreturn [{\n  json: {\n    start,\n    end\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1220
+      ],
+      "id": "a6754f30-e012-4ffb-8bae-12d9773102d5",
+      "name": "Generate Timestamps"
+    },
+    {
+      "parameters": {
+        "jsCode": "const candle = $json.values?.find(v => v.datetime.endsWith(\"09:30:00\"));\n\nif (!candle || !candle.open) {\n  // Flag as fallback\n  return [{\n    json: {\n      open_price: null,\n      use_fallback: true\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    open_price: parseFloat(candle.open),\n    use_fallback: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        1600
+      ],
+      "id": "718141df-a33f-4b12-9a03-fde93d7abf85",
+      "name": "Get Open Price"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1000,
+        1400
+      ],
+      "id": "3162be37-fce8-44d5-b6c8-bcfb97e3a356",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const year = new Date().getFullYear();\nreturn [{\n  json: {\n    ytd_start: `${year}-01-02`,\n    symbol: $json.symbol\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        -900
+      ],
+      "id": "db8b1df5-7019-4ab5-8030-9debdd602d11",
+      "name": "Set YTD Date"
+    },
+    {
+      "parameters": {
+        "url": "=https://finnhub.io/api/v1/quote?symbol={{ $json.symbol }}&token=*ADD API HERE*",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        -1040
+      ],
+      "id": "cf580885-a523-4511-866e-6557caa05f2e",
+      "name": "Fetch Current Price"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.twelvedata.com/time_series?symbol={{ $json.symbol }}&interval=1min&start_date={{ $json.ytd_start }} 09:30:00&end_date={{ $json.ytd_start }} 09:31:00&apikey=c80e4eff56134e6cbc8ea6ea070f8355",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        -960
+      ],
+      "id": "8bf9dca1-9155-4c8e-865d-0e6039435cfd",
+      "name": "YTD Opening Price"
+    },
+    {
+      "parameters": {
+        "jsCode": "const year = new Date().getFullYear();\nreturn [{\n  json: {\n    symbol: $json.symbol,\n    ytd_start: `${year}-01-02`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        -920
+      ],
+      "id": "3fb95606-9199-4c05-a808-8c0becce5b9d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1740,
+        -860
+      ],
+      "id": "2596df72-f1e0-4b22-8386-4c9e68e6e198",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Is the stock {{ $json.symbol }} currently a buy, sell, or hold based on expert consensus?\n\nUse the GPT model and Tavily to search for the most recent recommendations from Yahoo Finance, CNN, CNBC, or other financial analysts.\n\nYou MUST return your answer in exactly this format, using the provided JSON input:\n\nThe stock is {{ up / down }} {{ $json.percent_change }}% year to date. Experts say to {{ buy / sell / hold }}. I compiled (random number 4-16) sources, such as (two source names used, like Yahoo Finanace and another). Would you like me to forward the links?\n\nYou are not allowed to provide any explanation or alternate wording. Always return just a single sentence in the exact format shown above.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        -1020
+      ],
+      "id": "cd60204e-7691-44a5-a0d2-be928149c145",
+      "name": "Buy, sell, hold"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet for advice related to buy, sell, or to hold this stock.",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"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\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to search the internet for",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        2840,
+        -800
+      ],
+      "id": "4258bdc2-bf21-4674-a92c-ca292083554a",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2600,
+        -820
+      ],
+      "id": "0a987a63-7a15-4dd5-b25c-2eafd617461a",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "*ADD API HERE*",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { c, ytd_price, symbol } = $json;\n\nif (!c || !ytd_price) {\n  throw new Error(\"Missing price data for YTD calculation.\");\n}\n\nconst gain = c - ytd_price;\nconst percent = (gain / ytd_price) * 100;\nconst direction = gain >= 0 ? \"up\" : \"down\";\n\nreturn [{\n  json: {\n    symbol,\n    current_price: c.toFixed(2),\n    ytd_price: ytd_price.toFixed(2),\n    percent_change: percent.toFixed(2),\n    direction\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        -900
+      ],
+      "id": "e99647aa-cd10-4992-8bc5-dca089480adb",
+      "name": "YTD Change"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1160,
+        -920
+      ],
+      "id": "0cb64500-1a67-4493-9735-e15aa4dd3419",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This extracts the 09:30 open price\nconst ytd_open_raw = $json.values?.[0]?.open;\nconst ytd_price = parseFloat(ytd_open_raw);\n\nif (!ytd_price) {\n  throw new Error(\"YTD opening price not found.\");\n}\n\nreturn [{\n  json: {\n    symbol: $json.meta?.symbol,\n    ytd_price\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        -1020
+      ],
+      "id": "57decd1c-49ea-4b77-9de3-68985a40483a",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1980,
+        -880
+      ],
+      "id": "0b042f84-e26c-47a0-bbe4-4aef9d9ede91",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "content": "## Search Any Stock in the NYSE",
+        "height": 260,
+        "width": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -1160
+      ],
+      "id": "9aea5726-f785-4a8c-8a6c-f01e8ddd66da",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Portfolio Stocks Today"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        760,
+        1080
+      ],
+      "id": "6417a0d8-88fb-4465-8fcf-e253beab784c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apphVdAPzxhUFNjTj",
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://airtable.com/apphVdAPzxhUFNjTj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblC66cIuUim7IX7d",
+          "mode": "list",
+          "cachedResultName": "Stocks",
+          "cachedResultUrl": "https://airtable.com/apphVdAPzxhUFNjTj/tblC66cIuUim7IX7d"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        360,
+        240
+      ],
+      "id": "9ce464b2-a8cf-4f5d-9c85-45b500394c09",
+      "name": "Portfolio",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "fdZSGeLoPrdRap4r",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "db1ff943-bd26-43ec-8351-a1db843c2647",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        -40,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "apphVdAPzxhUFNjTj",
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://airtable.com/apphVdAPzxhUFNjTj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblC66cIuUim7IX7d",
+          "mode": "list",
+          "cachedResultName": "Stocks",
+          "cachedResultUrl": "https://airtable.com/apphVdAPzxhUFNjTj/tblC66cIuUim7IX7d"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Share Price": "={{ $fromAI('Share_Price__using_to_match_', ``, 'number') }}",
+            "Shares": "={{ $fromAI('Shares__using_to_match_', ``, 'number') }}",
+            "Stock Ticker": "={{ $fromAI('Stock_Ticker__using_to_match_', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Stock Ticker",
+            "Shares",
+            "Share Price"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Stock Ticker",
+              "displayName": "Stock Ticker",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Shares",
+              "displayName": "Shares",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Share Price",
+              "displayName": "Share Price",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        500,
+        240
+      ],
+      "id": "90ff2986-b49a-41a3-b46e-f1c857069151",
+      "name": "Update Stocks",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "fdZSGeLoPrdRap4r",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        220
+      ],
+      "id": "9379b4cd-cbfa-48fa-83e0-b278257746de",
+      "name": "Return Shares"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        340
+      ],
+      "id": "cc18dc64-29c7-4e59-a705-95d38359e081",
+      "name": "Return Buy Price"
+    },
+    {
+      "parameters": {
+        "url": "=https://finnhub.io/api/v1/quote?symbol={{ $json['Stock Ticker'] }}&token=*ADD API HERE*",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        -60
+      ],
+      "id": "f379186e-cb3a-498a-837b-176b247e010e",
+      "name": "Fetch Current Price1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1640,
+        -60
+      ],
+      "id": "fbc15ca4-3f07-421d-bf64-31e713523771",
+      "name": "Merge5"
+    },
+    {
+      "parameters": {
+        "content": "## Search Any Stock in the NYSE",
+        "height": 260,
+        "width": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        -200
+      ],
+      "id": "28ba113b-b34c-4ab4-a6e6-2701b5ef46b6",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apphVdAPzxhUFNjTj",
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://airtable.com/apphVdAPzxhUFNjTj"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblC66cIuUim7IX7d",
+          "mode": "list",
+          "cachedResultName": "Stocks",
+          "cachedResultUrl": "https://airtable.com/apphVdAPzxhUFNjTj/tblC66cIuUim7IX7d"
+        },
+        "filterByFormula": "={Stock Ticker} = \"{{ $json.symbol }}\"",
+        "options": {
+          "fields": [
+            "Share Price",
+            "Stock Ticker"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1060,
+        -60
+      ],
+      "id": "7d037b66-e23b-4749-8a5f-ff24acf6d71f",
+      "name": "Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "fdZSGeLoPrdRap4r",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { c, \"Share Price\": purchasePrice } = $json;\n\nif (!c || !purchasePrice) {\n  throw new Error(\"Missing 'c' (current price) or 'Share Price'\");\n}\n\nconst gain = c - purchasePrice;\nconst percent = (gain / purchasePrice) * 100;\n\nreturn [{\n  json: {\n    current_price: c.toFixed(2),\n    purchase_price: purchasePrice.toFixed(2),\n    gain: gain.toFixed(2),\n    percent_change: percent.toFixed(2),\n    direction: gain >= 0 ? \"up\" : \"down\",\n    ticker: $input.first().json[\"Stock Ticker\"]  \n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        -60
+      ],
+      "id": "36224eb0-6fcc-4158-892c-2ed1309dba39",
+      "name": "Current - Share Price"
+    },
+    {
+      "parameters": {
+        "jsCode": "const {\n  current_price,\n  purchase_price,\n  gain,\n  percent_change,\n  direction,\n  ticker,\n} = $json;\n\nconst gainOrLoss = direction === \"up\" ? \"gain\" : \"loss\";\n\nconst message = `${ticker} is ${direction} ${percent_change}% since you bought at $${purchase_price}, for a ${gainOrLoss} of $${gain}.`;\n\nreturn [{\n  json: {\n    voice_output: message\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        -60
+      ],
+      "id": "721ccd9c-47a3-48ba-8b25-14e0692daa5e",
+      "name": "F-String"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {
+          "query": "What are my total profits for Coinbase"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Set YTD Date",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Timestamps",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Price real",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Shares",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Buy Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Data": {
+      "main": [
+        [
+          {
+            "node": "JARVIS Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Return Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Price": {
+      "main": [
+        [
+          {
+            "node": "Get Open Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Timestamps": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Open Price": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Price real": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Set YTD Date": {
+      "main": [
+        [
+          {
+            "node": "Fetch Current Price",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Current Price": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "YTD Opening Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YTD Opening Price": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "Buy, sell, hold",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Buy, sell, hold",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YTD Change": {
+      "main": [
+        [
+          {
+            "node": "Buy, sell, hold",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buy, sell, hold": {
+      "main": [
+        []
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "YTD Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Portfolio": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Stocks": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Current Price1": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "Current - Share Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable": {
+      "main": [
+        [
+          {
+            "node": "Fetch Current Price1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current - Share Price": {
+      "main": [
+        [
+          {
+            "node": "F-String",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "F-String": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a755a1c0-5c17-4f75-b62d-c79b65c26912",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c649c9e0acff8ae826586d9788d2ba5cec645d0f921bc447e493790d7afe18da"
+  },
+  "id": "9z3RuBLDMfSv0Zqh",
+  "tags": []
+}

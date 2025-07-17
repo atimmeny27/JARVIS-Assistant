@@ -1,0 +1,661 @@
+{
+  "name": "Image From Prompt",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        340,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet if needed",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"*ADD API HERE*\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to write a blog about",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        680
+      ],
+      "id": "f0574b04-bc63-4f90-9005-af7466f88b5f",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query || $json.message }}",
+        "options": {
+          "systemMessage": "=You are an image prompt processor. When the user gives you a request, return the same input string exactly in JSON format like this:\n\n{\n  \"generation_prompt\": \"original user prompt\"\n}\n\n⚠️ Return only JSON. No formatting, no explanations, no bullet points.\n\nYou are also to ALWAYS ADD the following to the end of every single prompt: \"Wide 16:9 view, photorealistic style.\"\n\nSo \"A majestic ancient Roman villa.\" would turn into original user prompt: \"A majestic ancient Roman villa. Wide 16:9 view, photorealistic style.\" "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        660,
+        340
+      ],
+      "id": "0d554e15-3230-4a6f-a4a1-98c1651624a4",
+      "name": "Content Creator Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "14d9076e-27ea-4846-8b44-f83cf4022b9e",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        800
+      ],
+      "id": "9f26ce2a-122d-4b2d-9ef5-4f3c5dc00107",
+      "name": "Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f2a8ff2d-6b59-4ad6-a2e7-8705354f4105",
+              "name": "response",
+              "value": "Error occurred. Please try again.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1000,
+        400
+      ],
+      "id": "2273b2df-6d38-46a1-9146-8adc2a0bf79f",
+      "name": "Try Again"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        540
+      ],
+      "id": "11a0e7b9-6ab3-4521-b50c-4e2d84da3174",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "*ADD API HERE*",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        140
+      ],
+      "id": "1a43cfbb-d1e1-410a-9e6b-b8cbc9f12e51",
+      "name": "File Save"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "02f1e4fc-01df-4ef3-9b2c-0b6e93aab278",
+              "name": "generation_prompt",
+              "value": "={{ JSON.parse($json.output).generation_prompt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1000,
+        140
+      ],
+      "id": "154f8c7d-c1ae-4572-acdb-b2f4bab49ba1",
+      "name": "Parse Output"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the image URL from the first item in \"data\"\nconst imageUrl = $json.data[0].url;\n\n// Return it so the next node can access it as {{$json.url}}\nreturn [\n  {\n    json: {\n      url: imageUrl\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        140
+      ],
+      "id": "e153aa84-0cb8-4e05-9c8a-0e88088d0555",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "name": "={{ $binary.data.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2040,
+        800
+      ],
+      "id": "f045a90e-9480-46c9-b755-488a66acb058",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "*ADD API HERE*",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer *ADD API HERE*"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"dall-e-3\",\n  \"prompt\": \"{{ $json.generation_prompt }}\",\n  \"n\": 1,\n  \"size\": \"1024x1024\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        140
+      ],
+      "id": "6ec96f0e-aa86-43da-b911-835f9990e42b",
+      "name": "Image Gen1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Token *ADD API HERE*"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"21b2d1458c4afe4ba7ad2ab56cc45b862736955bacaf993acfa173e3be1b8033\",\n  \"input\": {\n    \"prompt\": \"{{ $json.generation_prompt }}\",\n    \"num_inference_steps\": 4,\n    \"num_outputs\": 1,\n    \"output_format\": \"png\",\n    \"width\": 1024,\n    \"height\": 1024\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1080,
+        800
+      ],
+      "id": "ef82d31e-60d3-462a-b427-c49f6b08cc36",
+      "name": "Image Gen"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "14d9076e-27ea-4846-8b44-f83cf4022b9e",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1980,
+        140
+      ],
+      "id": "586b8368-349b-4137-9b8b-9794153c0dd0",
+      "name": "Response1"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1WPeuqjkb7EwwcE5V6np-ffAy03y0TMBX",
+          "mode": "list",
+          "cachedResultName": "JARVIS Generated",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1WPeuqjkb7EwwcE5V6np-ffAy03y0TMBX"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1800,
+        140
+      ],
+      "id": "64bb45b7-3fae-4313-8868-0df28ed68613",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "*ADD API HERE*",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.get }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Token *ADD API HERE*"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1260,
+        800
+      ],
+      "id": "f1291b2d-f430-48ef-9a25-b3f1f318b89d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "content": "## GPT-4o Image",
+        "height": 120,
+        "width": 950
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        940,
+        80
+      ],
+      "id": "90a14855-89c1-43e7-b084-8805aa19c1f2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output[0] }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        800
+      ],
+      "id": "ca50d549-408c-4939-b387-53f759ec9495",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1480,
+        800
+      ],
+      "id": "2bbd1a83-78c6-419e-937b-d8078b56073c",
+      "name": "Wait",
+      "webhookId": "660b1542-f99c-4a61-bf7d-ee77f08db682"
+    },
+    {
+      "parameters": {
+        "content": "## Flux image gen",
+        "height": 100,
+        "width": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        740
+      ],
+      "id": "9ae53440-2509-4b81-b161-30872a4798db",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram-shortcut",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        280,
+        140
+      ],
+      "id": "0144fba9-d1d1-43f8-a86f-aad76b8abf15",
+      "name": "Webhook",
+      "webhookId": "55414089-6bf3-4af4-961d-a207c8001ba5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = JSON.parse($json.body.message).message;\n\nreturn [\n  {\n    json: {\n      message: message\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        220
+      ],
+      "id": "84459a8c-0dd9-4935-86d5-49925cde2d55",
+      "name": "Code1"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "An empty view of tony starks home lab."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Content Creator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "Content Creator Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Creator Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Try Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Content Creator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Save": {
+      "main": [
+        [
+          {
+            "node": "Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Output": {
+      "main": [
+        [
+          {
+            "node": "Image Gen1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Try Again": {
+      "main": [
+        []
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "File Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Gen": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive1": {
+      "main": [
+        [
+          {
+            "node": "Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Gen1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Content Creator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6130ec38-d271-4ce1-ae64-9b86e8fb94d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c649c9e0acff8ae826586d9788d2ba5cec645d0f921bc447e493790d7afe18da"
+  },
+  "id": "zi5sO0nqOZ9g3PLk",
+  "tags": []
+}

@@ -1,0 +1,331 @@
+{
+  "name": "CAD Designer",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        260,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "You are an expert JSCAD code generator. Your sole purpose is to convert natural language descriptions of 3D objects into valid, functional JavaScript code snippets using the @jscad/modeling library.\n\nUse this link if needed to model correctly: https://openjscad.xyz/docs\n\n**Your output must always be a complete and runnable `main` function for a `source_design.js` file.**\n**Adhere strictly to the following requirements:**\n\n1.  **File Structure:** The output must always start with the necessary `require` statement for `@jscad/modeling` and include a `main` function that exports itself:\n\n    ```javascript\n    const { primitives, booleans, transforms, extrusions, expansions, path, curves } = require('@jscad/modeling');\n\n    const main = (/* optional_parameters_object */) => {\n        // Your generated JSCAD code here\n        return /* a single or combined 3D geometry object */;\n    };\n\n    module.exports = { main };\n    ```\n    * **Important:** Only import modules (`primitives`, `booleans`, etc.) that are actually used in the generated code.\n\n2.  **Libraries:** Exclusively use functions and objects from the `@jscad/modeling` library. Do not use deprecated or older JSCAD syntax.\n\n3.  **Units:** Assume all numerical dimensions provided in the natural language description (e.g., inches, mm, cm, feet) should be translated directly into JSCAD's default unit system. If no units are specified, default to generic \"units\" which typically represent millimeters in 3D printing contexts.\n\n4.  **Clarity and Readability:**\n    * Use meaningful variable names.\n    * Add comments for complex sections if necessary, but keep the code concise.\n    * Prioritize clear, logical construction of the 3D model.\n\n5.  **Output Type:** The `main` function must return a single 3D geometry object (e.g., `geom3`, `poly3`) or an array of such objects if multiple distinct parts are requested. Use `booleans.union()` to combine multiple elements into a single `geom3` when appropriate.\n\n6.  **Parameterization (Optional but Recommended):**\n    * If the user explicitly asks for adjustable parameters (e.g., \"a customizable box\"), you can include a `getParameterDefinitions` function. However, for direct \"make a screwdriver\" type requests, focus on hardcoding the specified dimensions into the `main` function directly.\n    * For the initial prompt, assume dimensions are fixed values within the `main` function unless specifically requested otherwise.\n\n7.  **No Extraneous Text:** Your response must contain *only* the JSCAD code. Do not include any conversational text, explanations, or markdown formatting beyond the code block itself (unless explicitly asked to explain).\n\n**Considerations for Handling Input:**\n\n* **Ambiguity:** If a description is ambiguous, make a reasonable default assumption and stick to it (e.g., if \"rod\" is mentioned, assume it's a cylinder unless otherwise specified).\n* **Missing Information:** If essential dimensions are missing (e.g., \"a box\"), use sensible default values (e.g., `size: 10`). State internally that defaults were used.\n* **Complex Shapes:** Break down complex objects into simpler primitives and use boolean operations (`union`, `subtract`, `intersect`) or transformations (`translate`, `rotate`, `scale`) to assemble them.\n\n**Example Input/Output Format for Training:**\n\n**User Input Example:**\n\"Make a simple cube of size 10.\"\n\n**Your Expected Output (JSCAD Code Snippet):**\n```javascript\nconst { primitives } = require('@jscad/modeling');\n\nconst main = () => {\n  return primitives.cube({ size: 10 });\n};\n\nmodule.exports = { main };"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        480,
+        340
+      ],
+      "id": "45931964-c7cf-49da-b8ac-0363c251877c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        560
+      ],
+      "id": "04d3b042-4ce6-4990-9a95-0f19a2d830f0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "*ADD API HERE*",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw output from the previous node, specifically the 'output' field.\nconst llmRawCodeString = $input.item.json.output;\n\nlet cleanedCode = llmRawCodeString;\n\n// 1. Remove the leading \"```javascript\\n\" and trailing \"\\n```\"\n// This regex is specific to markdown JS code blocks.\ncleanedCode = cleanedCode.replace(/^```javascript\\n/, '').replace(/\\n```$/, '');\n\n// 2. Trim any remaining leading/trailing whitespace (like extra newlines)\ncleanedCode = cleanedCode.trim();\n\n// Output the cleaned code in a new field, e.g., 'cleaned_jscad_code'\n// This will be accessible by the next node in your workflow (e.g., Google Drive).\nreturn [{ json: { cleaned_jscad_code: cleanedCode } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        340
+      ],
+      "id": "61c6b47c-0423-4694-a2ea-fb52da506410",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.cleaned_jscad_code }}",
+        "name": "upload.js",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1060,
+        340
+      ],
+      "id": "24b5e72f-d80f-4074-a04b-d0a9684cc0fd",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "*ADD API HERE*",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "You are an expert OpenSCAD CAD designer.\nYour sole purpose is to convert natural language descriptions of 3D objects into valid, functional OpenSCAD code.\nYour responses must strictly follow the rules below to ensure compatibility, clarity, and usability.\n\n⸻\n\n✅ Requirements for Output\n\t1.\tFile Format\nYour output must always be a single OpenSCAD code block, formatted as a .scad file. It must:\n\t•\tBe syntactically correct and directly runnable in OpenSCAD.\n\t•\tContain only OpenSCAD code—no extra text, commentary, or explanation outside the code block unless explicitly asked.\n\t2.\tStructure\n\t•\tUse clear, logical construction.\n\t•\tUse modules or functions only if necessary for repeated parts or organization.\n\t•\tAll code must be self-contained and directly renderable when opened in OpenSCAD.\n\t3.\tDefault Units & Assumptions\n\t•\tUse millimeters as the default unit.\n\t•\tIf a dimension is unspecified, make a reasonable default (e.g., cube = 10×10×10mm).\n\t•\tAssume cylinders are upright (Z-axis) unless stated otherwise.\n\t4.\tClarity and Readability\n\t•\tUse meaningful variable names.\n\t•\tAdd comments only where needed for clarity.\n\t•\tFavor simplicity and geometric accuracy over visual styling.\n\t5.\tOutput Must:\n\t•\tAlways render a physical object or complete part\n\t•\tUse boolean operations (difference(), union(), etc.) where needed\n\t•\tNot rely on external files unless specifically instructed\n\n⸻\n\n📦 Example Prompt + Expected Output\n\nUser Input:\n“Make a rectangular base 100mm by 60mm with a centered cylindrical peg that’s 10mm tall and 8mm wide.”\n\nYour Output Should Be:\n// Rectangular base with cylindrical peg\ndifference() {\n    cube([100, 60, 5], center = true);  // Base plate\n    // Centered peg\n    translate([0, 0, 5])\n        cylinder(h = 10, r = 4, $fn = 64);\n}\n\n⚠️ Important Notes\n\t•\tIf dimensions or positions are missing, choose logical defaults and do not leave placeholders.\n\t•\tYou may use translate(), rotate(), scale() to position or shape components.\n\t•\tUse $fn = 64 for smooth cylinders and curves unless performance is a concern."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        460,
+        740
+      ],
+      "id": "672bc402-3ad4-4003-9dc9-e487b5b790eb",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        420,
+        960
+      ],
+      "id": "ec7ad62f-0c7f-4b4f-9ead-f28ceecf9532",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "*ADD API HERE*",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the raw LLM-generated code from the 'output' field of the previous node\nconst rawCode = $input.item.json.output;\nlet cleanedCode = rawCode;\n\n// Step 1: Strip Markdown-style JS code block markers (```javascript ... ```)\ncleanedCode = cleanedCode\n  .replace(/^```javascript\\n/, '')  // Remove the opening code block\n  .replace(/\\n```$/, '');           // Remove the closing code block\n\n// Step 2: Trim any extra whitespace or newlines\ncleanedCode = cleanedCode.trim();\n\n// Return the cleaned code in a new JSON field for use by downstream nodes\nreturn [{ json: { cleaned_jscad_code: cleanedCode } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        740
+      ],
+      "id": "a90fc4fe-9092-4f1b-9552-45b024dcf8c0",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.cleaned_jscad_code }}",
+        "name": "upload.js",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        740
+      ],
+      "id": "35f738b8-7ac5-4a60-a02f-3cd2284fc940",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "*ADD API HERE*",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"*ADD API HERE*\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to search the internet for",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        940
+      ],
+      "id": "5771cd9a-05e1-4940-9e8f-8c4a0ed6cf10",
+      "name": "Tavily1"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "Make a model of a hollow box with the top of the box open. It should be 5-sided with a hollow center. The dimensions are 5 width, 4 height, 3 depth. The top of the box should have an overhang or lip a little bit over each side like a countertop."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "655963f5-7f73-48ec-88a7-9179ea5eb0d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c649c9e0acff8ae826586d9788d2ba5cec645d0f921bc447e493790d7afe18da"
+  },
+  "id": "hCvkwyQW3WQ10xr6",
+  "tags": []
+}

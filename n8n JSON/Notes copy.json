@@ -1,0 +1,220 @@
+{
+  "name": "Notes",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        260,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "You are a professional research assistant and expert note-taker.\nYour role is to turn any given topic into a clear, organized, and well-researched document of notes. While I am interested in the events, details, and effects; I am also interested in the small little fun facts. For example when asked about vikings you could mention Ragnar Lothbrok and the blood eagle, or with World War 2 mention unit 731 and the horrors. I want to know more than just the traditional academic requirements.\n\nUse the http node search tool to get expanded information. \n\nRequirements for Output:\n• Format: Return plain Markdown, without any code blocks.\n• Structure: Use headings, bullet points, numbered lists, and bold for emphasis.\n• Length: Aim for a detailed one-page summary (but longer is okay if the topic is complex).\n• Clarity: Use simple, clear language with academic professionalism.\n• Depth: Cover background, key concepts, examples, and real-world applications if possible.\n• Do NOT include any filler text, meta-comments, or “here’s your result” phrasing.\n\nExample Input:\n\"Photosynthesis\"\n\nExample Output:\n# Photosynthesis\nPhotosynthesis is the process by which plants, algae, and some bacteria convert light energy into chemical energy...\n\n[continues in organized Markdown format], do not use /n for a new line, when you intend to return or make a new line, use <br>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        480,
+        340
+      ],
+      "id": "02edfb64-8605-468b-9c05-56dc3ff9c992",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "grok-3",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        400,
+        540
+      ],
+      "id": "a89e08d2-5442-4a04-aea5-8b36bf9495a0",
+      "name": "xAI Grok Chat Model",
+      "credentials": {
+        "xAiApi": {
+          "id": "*ADD API HERE*",
+          "name": "xAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract LLM-generated markdown from 'output' field\nlet rawOutput = $input.item.json.output || \"\";\nlet cleanedMarkdown = rawOutput;\n\n// Remove markdown-style code fences if they exist\ncleanedMarkdown = cleanedMarkdown.replace(/^```(?:markdown)?\\n/, '').replace(/\\n```$/, '').trim();\n\n// Convert newlines to <br> for HTML rendering\nconst htmlReady = cleanedMarkdown.replace(/\\n/g, \"<br>\");\n\n// Return both markdown and HTML-formatted content\nreturn [{\n  json: {\n    notes_markdown: cleanedMarkdown,\n    html_with_breaks: htmlReady\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        460
+      ],
+      "id": "ee617a16-72d6-4f91-83f2-6d35e1c76c31",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.notes_markdown }}",
+        "name": "Notes.md",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "*ADD API HERE*",
+          "mode": "list",
+          "cachedResultName": "*ADD API HERE*",
+          "cachedResultUrl": "*ADD API HERE*"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1140,
+        620
+      ],
+      "id": "705dae31-41aa-4187-b6b3-d7256158f18e",
+      "name": "Google Drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "*ADD API HERE*",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet if needed",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"*ADD API HERE*\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to write a blog about",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        540
+      ],
+      "id": "cf94dc8f-87bf-4399-bace-682d1dc2cc8d",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {
+        "content": "## This can make a detailed notes sheet for any topic, sent to a google drive folder",
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        220
+      ],
+      "id": "98993e33-8c42-42e7-8409-d5f8a2cfd789",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "Generate a summary about Vikings"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ceb9c2c8-2e5f-4211-8728-7dddd8b29cd8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c649c9e0acff8ae826586d9788d2ba5cec645d0f921bc447e493790d7afe18da"
+  },
+  "id": "ukWbYLgzD6sTunI6",
+  "tags": []
+}

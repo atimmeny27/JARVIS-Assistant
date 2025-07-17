@@ -1,0 +1,255 @@
+{
+  "name": "Programming Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "c055762a-8fe7-4141-a639-df2372f30060",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        200,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "You are helping me code and write programs.\n\nReturn only raw JSON, not a stringified JSON object. Do not wrap the output in quotation marks. Do not escape any characters. The output must be valid JSON.\n\nWhen the user gives you a request, return the updated prompt and language in separate key value pairs in JSON format like this:\n\n{\n  \"prompt\": \"see instruction below\",\n\n  \"language\": \"html/py/js\"\n}\n\n\nYOU MUST RETURN TWO KEYS FOR OUTPUT : PROMPT AND LANGUAGE\n⚠️ Return only JSON. No formatting, no explanations, no bullet points.\n\n\nYour job is to:\n- Take this query and rewrite it as a detailed, clean, coding-ready prompt suitable for GPT-4o or Claude.\n- Include the best-suited **language** for the task. For example:\n  - Websites: HTML/CSS/JS\n  - APIs or server tasks: Python\n  - Shell scripts: Bash\n- Choose a single-file approach when possible.\n- Return only valid JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        480,
+        340
+      ],
+      "id": "fc6fa286-144f-478a-a35d-f3ff608ae4c9",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer *ADD API HERE*"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful assistant. Return only the full code for the task in {{ $json.language }}. Do not include any explanation, formatting, or markdown.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.generation_prompt }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        340
+      ],
+      "id": "9da73608-80a6-46c1-acd1-3496ad35f693",
+      "name": "Code Gen"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        180
+      ],
+      "id": "90d89957-7611-4874-9629-8f42153c5528",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.choices[0].message.content;\n\n// Extract code inside triple backticks\nconst match = raw.match(/```(?:\\w*\\n)?([\\s\\S]*?)```/);\nconst code = match ? match[1].trim() : raw.trim();\n\nreturn [{\n  json: {\n    generation_prompt: code,\n    language: \"html\" // or dynamically pass from earlier\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        340
+      ],
+      "id": "9d2e5d15-34ce-4ef8-ac81-97f44aa8d467",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.output;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err) {\n  throw new Error(\"GPT output is not valid JSON string.\");\n}\n\nreturn [{\n  json: {\n    generation_prompt: parsed.prompt,\n    language: parsed.language\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        340
+      ],
+      "id": "7e779c3e-a7a6-4ba3-8d01-a21bf03be68d",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $json.generation_prompt || \"empty\";\nconst lang = $json.language.toLowerCase();\n\nlet ext = \"txt\";\nswitch (lang) {\n  case \"python\": ext = \"py\"; break;\n  case \"javascript\": ext = \"js\"; break;\n  case \"html\": ext = \"html\"; break;\n  case \"css\": ext = \"css\"; break;\n  case \"bash\": ext = \"sh\"; break;\n  case \"json\": ext = \"json\"; break;\n}\n\nconst filename = `output.${ext}`;\n\nreturn [{\n  binary: {\n    data: {\n      data: Buffer.from(content).toString('base64'),\n      mimeType: 'text/plain',\n      fileName: filename\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        340
+      ],
+      "id": "d01e927c-0d30-4796-8039-a658c688d616",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "name": "JARVIS Generated",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1660,
+        340
+      ],
+      "id": "eba1776d-a6d6-4d4f-ae6b-cc9f3f2d3b52",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "*ADD API HERE*",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Add the best programming / code model available when you do this",
+        "height": 240
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        400,
+        560
+      ],
+      "id": "3f2dbb35-61d7-429c-881f-467624233796",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Execute workflow’": [
+      {
+        "json": {
+          "query": "A button that when you push expands to show big text that says Happy Birthday"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Code Gen": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5adf47a5-ab32-447a-aec3-b190125c9057",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c649c9e0acff8ae826586d9788d2ba5cec645d0f921bc447e493790d7afe18da"
+  },
+  "id": "UcRKzoIBQCJK6uHB",
+  "tags": []
+}
