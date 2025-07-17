@@ -22,6 +22,9 @@ cd JARVIS-Assistant
 3. And it has this animation when you talk to it
 <img width="1695" alt="Screenshot 2025-06-10 at 3 33 52 PM" src="https://github.com/user-attachments/assets/08927344-625c-4b9b-82f3-b364cb308f42" />
 
+This is what the image recognition tool looks like (the black will be webcam space)
+<img width="1518" height="821" alt="Screenshot 2025-07-17 at 5 29 14 PM" src="https://github.com/user-attachments/assets/2af8f15c-fd90-494f-9f15-63d9b25054c7" />
+
 4. This is all changable in the html file.
 
 ## Backend Setup
